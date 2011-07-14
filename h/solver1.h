@@ -50,6 +50,7 @@ public:
 	void print_array_representation_of_bes (lhsVariable* lefts, uint32_t* rights, uint32_t left_size);
 
 	void* createDataStructure(bes);
+	void createAIG(lhsVariable* lefts, uint32_t* rights, uint32_t left_size);
 	bool solve(void*);
 };
 
