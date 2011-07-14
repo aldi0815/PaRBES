@@ -1,4 +1,5 @@
 #include "solver1.h"
+#include "Aig.h"
 
 
 #define max_number_of_rhs_variables 100000000 // fix the max_number_of_rhs_variables!
@@ -244,4 +245,55 @@ void solver1::print_array_representation_of_bes (lhsVariable* lefts, uint32_t* r
     }
     cout << endl;
   }
+}
+
+void solver1::createAIG(lhsVariable* lefts, uint32_t* rights, uint32_t left_size) {
+	Aig* myAig = new Aig(left_size);
+	for (uint32_t i = 0; i < left_size; i++) {
+		// check whether LHS is already solved
+		if (lefts[i].isSolved()) {
+			// connect solved output directly with Zero/One-Node
+			Node* tmp = lefts[i].getValue() ? myAig->getOneNode() : myAig->getZeroNode();
+			myAig->setOutput(false, i, tmp);
+		} else {
+			// add
+			uint32_t j = lefts[i].getIndex();
+			// create first pair
+			Node* n1 = myAig->createInput(rights[j]);
+
+			while (++j < lefts[i+1].getIndex()) {
+				// TODO: klären ob immer mehr als 2 variablen vorkommen
+				Node* n2 = myAig->createInput(rights[j]);
+
+				// check whether the
+				if(lefts[i].getType()) {	// AND
+					//cout << rights[j] << " ";
+					n1 = (And*)myAig->createAnd(n1, n2);
+				} else {	// OR
+					n1 = (And*)myAig->createOr(n1, n2);
+				}
+			}
+			myAig->setOutput(false, i, n1);
+			//myAig->print(n1);
+		}
+		//cout << endl;
+	}
+	// hier Gauß
+	for(int i = myAig->getSize()-1; i >= 0; i--){
+		myAig->eliminate(i);
+		//myAig->print();
+		for(int j = i-1; j >= 0; j--) {
+			myAig->substitute(j, i);
+			//myAig->print();
+			if(i <= 2215)
+				std::cout << "substitute: " << i << " in " << j << "\n";
+		}
+		std::cout << "eliminate: " << i << "\n";
+	}
+	// solve
+	for(int i = 0; i < myAig->getSize(); i++) {
+		myAig->solveEquation(i);
+	}
+	// ergebnis
+	myAig->print();
 }

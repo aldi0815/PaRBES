@@ -24,7 +24,8 @@ int main (int argc, const char *argv[])
     uint32_t* rights;
     std::pair <lhsVariable*, uint32_t*> array_representation_of_bes;
 
-	parse(argv[1]); 
+	//parse(argv[1]); 
+	parse("vasy_1_4.bcg.ndl.bes"); 
     //graphBES();
 
 	solver1* mySolver = new solver1();
@@ -38,9 +39,12 @@ int main (int argc, const char *argv[])
 
 	
 
-	printf("%d\n", left_size);
+	//printf("%d\n", left_size);
 
-	mySolver->print_array_representation_of_bes (lefts, rights, left_size);
+	//mySolver->print_array_representation_of_bes (lefts, rights, left_size);
+
+
+	 mySolver->createAIG(lefts, rights, left_size);
     
     return 0;
 }
