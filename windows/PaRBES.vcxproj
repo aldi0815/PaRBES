@@ -42,12 +42,13 @@
     <CustomBuildAfterTargets>InitializeBuildStatus</CustomBuildAfterTargets>
     <CustomBuildBeforeTargets>
     </CustomBuildBeforeTargets>
-    <IncludePath>C:\Users\aditter\Desktop\PaRBES\h;$(IncludePath)</IncludePath>
+    <IncludePath>D:\PaRBES\h;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <CustomBuildAfterTargets>InitializeBuildStatus</CustomBuildAfterTargets>
     <CustomBuildBeforeTargets>Build</CustomBuildBeforeTargets>
+    <IncludePath>D:\PaRBES\h;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -90,12 +91,22 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\h\Aig.h" />
+    <ClInclude Include="..\h\And.h" />
     <ClInclude Include="..\h\bes.h" />
+    <ClInclude Include="..\h\Input.h" />
+    <ClInclude Include="..\h\Node.h" />
+    <ClInclude Include="..\h\Output.h" />
     <ClInclude Include="..\h\solver1.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\Aig.cpp" />
+    <ClCompile Include="..\src\And.cpp" />
     <ClCompile Include="..\src\bes.cpp" />
+    <ClCompile Include="..\src\Input.cpp" />
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\Node.cpp" />
+    <ClCompile Include="..\src\Output.cpp" />
     <ClCompile Include="..\src\solver1.cpp" />
     <ClCompile Include="parser.c" />
   </ItemGroup>
