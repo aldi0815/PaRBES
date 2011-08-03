@@ -80,7 +80,7 @@ printf("Eqn[%d][%d]:\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCou
 #endif
 mybes.blocks[mybes.blockCount].eqns = realloc(mybes.blocks[mybes.blockCount].eqns, (mybes.blocks[mybes.blockCount].eqnCount+1) * sizeof(eqn));
 mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount = 0;
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars = NULL;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs = NULL;
 }
 
 localvariableidentifier '=' formula
@@ -99,8 +99,8 @@ localvariableidentifier:
 globalvariableidentifier:
 'X' NUMBER '_' NUMBER 
 { 
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].localRef = $2;
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].globalRef = $4;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].localRef = $2;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].globalRef = $4;
 //printf("global %d_%d\n", $1, $4);
 }
 ;
@@ -111,13 +111,13 @@ atomicformula
 | atomicformula 'o' 'r' 
 {
 #ifdef DEBUG
-printf("Var[%d][%d][%d]: %p\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars);
+printf("Var[%d][%d][%d]: %p\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs);
 #endif
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars = realloc(mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars, (mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount+1) * sizeof(var));
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = disjunct;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs = realloc(mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs, (mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount+1) * sizeof(var));
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = disjunct;
 mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount++;
 #ifdef DEBUG
-//printf("Var[%d][%d][%d]: %p\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars);
+//printf("Var[%d][%d][%d]: %p\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs);
 #endif
 }	
 disjunctive
@@ -125,10 +125,10 @@ disjunctive
 | atomicformula 'a' 'n' 'd' 
 {
 #ifdef DEBUG
-printf("Var[%d][%d][%d]: %p\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars);
+printf("Var[%d][%d][%d]: %p\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs);
 #endif
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars = realloc(mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars, (mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount+1) * sizeof(var));
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = conjunct;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs = realloc(mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs, (mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount+1) * sizeof(var));
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = conjunct;
 mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount++;
 }	
 conjunctive
@@ -139,9 +139,9 @@ conjunctive
 atomicformula:
 {
 #ifdef DEBUG
-printf("Var[%d][%d][%d]: %p\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars);
+printf("Var[%d][%d][%d]: %p\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs);
 #endif
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars = realloc(mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars, (mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount+1) * sizeof(var));
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs = realloc(mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs, (mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount+1) * sizeof(var));
 }
 
 extra
@@ -154,23 +154,23 @@ mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].var
 extra:
 'f' 'a' 'l' 's' 'e' 
 {
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = F;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = F;
 }
 
 | 't' 'r' 'u' 'e' 
 {	
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = T;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = T;
 }
 
 | localvariableidentifier 
 {
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = local;
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].localRef = $1;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = local;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].localRef = $1;
 }
 
 | globalvariableidentifier 
 {
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = global;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = global;
 }
 ;
 
@@ -179,10 +179,10 @@ atomicformula
 | atomicformula 'o' 'r' 
 {
 #ifdef DEBUG
-printf("Var[%d][%d][%d]: %p\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars);
+printf("Var[%d][%d][%d]: %p\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs);
 #endif
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars = realloc(mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars, (mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount+1) * sizeof(var));
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = disjunct;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs = realloc(mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs, (mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount+1) * sizeof(var));
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = disjunct;
 mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount++;
 }
 disjunctive 
@@ -193,10 +193,10 @@ atomicformula
 | atomicformula 'a' 'n' 'd'	
 {
 #ifdef DEBUG
-printf("Var[%d][%d][%d]: %p\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars);
+printf("Var[%d][%d][%d]: %p\n", mybes.blockCount, mybes.blocks[mybes.blockCount].eqnCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount, mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs);
 #endif
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars = realloc(mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars, (mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount+1) * sizeof(var));
-mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].vars[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = conjunct;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs = realloc(mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs, (mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount+1) * sizeof(var));
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = conjunct;
 mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount++;
 }
 conjunctive

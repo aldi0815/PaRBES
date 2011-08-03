@@ -24,23 +24,25 @@ int main (int argc, const char *argv[])
     uint32_t* rights;
     std::pair <lhsVariable*, uint32_t*> array_representation_of_bes;
 
-	parse(argv[1]); 
+	parse(argv[1]);
     //graphBES();
+	mybes.numVars = computeNumVars();
+	computeDistance();
 
-	solver1* mySolver = new solver1();
+	//solver1* mySolver = new solver1();
 
-	void* dataStructure = mySolver->createDataStructure(mybes);
-	mySolver->solve(dataStructure);
+	//void* dataStructure = mySolver->createDataStructure(mybes);
+	//mySolver->solve(dataStructure);
 
-	 array_representation_of_bes = mySolver->get_array_representation_of_bes (&mybes, &left_size, &right_size);
-     lefts = array_representation_of_bes.first;
-     rights = array_representation_of_bes.second;
+	// array_representation_of_bes = mySolver->get_array_representation_of_bes (&mybes, &left_size, &right_size);
+	//lefts = array_representation_of_bes.first;
+	//rights = array_representation_of_bes.second;
 
-	
+	//
 
-	printf("%d\n", left_size);
+	//printf("%d\n", left_size);
 
-	mySolver->print_array_representation_of_bes (lefts, rights, left_size);
-    
+	//mySolver->print_array_representation_of_bes (lefts, rights, left_size);
+
     return 0;
 }

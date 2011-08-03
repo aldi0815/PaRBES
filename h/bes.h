@@ -13,8 +13,8 @@
 #include <stdlib.h>
 
 typedef enum varType{
-      T,
       F,
+      T,
       global,
       local,
 	  conjunct,
@@ -30,7 +30,8 @@ typedef struct var{
 typedef struct eqn{
     int varCount;
     int lhsId;
-    var* vars;
+	int lhs;
+    var* rhs;
 }eqn;
 
 typedef struct besblock{
@@ -44,9 +45,13 @@ typedef struct besblock{
 
 typedef struct bes{
     int blockCount;
+	int numVars;
     besblock* blocks;
 }bes;
 
+
+int computeNumVars();
+void computeDistance();
 void printBES();
 void graphBES();
 

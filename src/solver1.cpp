@@ -102,11 +102,11 @@ std::pair <lhsVariable*, uint32_t*> solver1::get_array_representation_of_bes (be
         lefts[offset].setSolved();
 	lefts[offset].setCon();
 	
- 	if (input_bes->blocks[i].eqns[j].vars[0].type == T)
+ 	if (input_bes->blocks[i].eqns[j].rhs[0].type == 1)
 	{  
 	  lefts[offset].setTrue();
 	}
-	else if (input_bes->blocks[i].eqns[j].vars[0].type == F)
+	else if (input_bes->blocks[i].eqns[j].rhs[0].type == 0)
 	     {
 	        lefts[offset].setFalse();
 	     }
@@ -127,14 +127,14 @@ std::pair <lhsVariable*, uint32_t*> solver1::get_array_representation_of_bes (be
 		  lefts[offset].setDis();
 	       }  
 	       
-	       if (input_bes->blocks[i].eqns[j].vars[0].type == local)
+	       if (input_bes->blocks[i].eqns[j].rhs[0].type == local)
 	       { 
-	         rights[index] = input_bes->blocks[i].eqns[j].vars[0].localRef + offsets[i];
+	         rights[index] = input_bes->blocks[i].eqns[j].rhs[0].localRef + offsets[i];
 	       }
 	       else{
-		 uint32_t globalRef = input_bes->blocks[i].eqns[j].vars[0].globalRef;
+		 uint32_t globalRef = input_bes->blocks[i].eqns[j].rhs[0].globalRef;
 		 
-                 rights[index] = input_bes->blocks[i].eqns[j].vars[0].localRef + offsets[globalRef];
+                 rights[index] = input_bes->blocks[i].eqns[j].rhs[0].localRef + offsets[globalRef];
 		 
 		 if ( i != globalRef )
 		 {
@@ -163,21 +163,21 @@ std::pair <lhsVariable*, uint32_t*> solver1::get_array_representation_of_bes (be
 	 else
 	   lefts[offset].setFalse();
 	
- 	if (input_bes->blocks[i].eqns[j].vars[1].type == conjunct) 
+ 	if (input_bes->blocks[i].eqns[j].rhs[1].type == conjunct) 
 	  lefts[offset].setCon();
 	else 
           lefts[offset].setDis();	
 
         for(uint32_t k = 0; k < input_bes->blocks[i].eqns[j].varCount; k=k+2) //TODO fix x1 = x5 and x5 and x5
 	{
-	  if (input_bes->blocks[i].eqns[j].vars[k].type == local)
+	  if (input_bes->blocks[i].eqns[j].rhs[k].type == local)
 	  { 
-	    rights[index] = input_bes->blocks[i].eqns[j].vars[k].localRef + offsets[i];
+	    rights[index] = input_bes->blocks[i].eqns[j].rhs[k].localRef + offsets[i];
 	  }
 	  else{
-	     uint32_t globalRef = input_bes->blocks[i].eqns[j].vars[k].globalRef;
+	     uint32_t globalRef = input_bes->blocks[i].eqns[j].rhs[k].globalRef;
 		 
-             rights[index] = input_bes->blocks[i].eqns[j].vars[k].localRef + offsets[globalRef];
+             rights[index] = input_bes->blocks[i].eqns[j].rhs[k].localRef + offsets[globalRef];
 	     
              if ( i != globalRef )
              {
