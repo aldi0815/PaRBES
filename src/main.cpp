@@ -17,18 +17,43 @@ extern "C" bes mybes;
 
 int main (int argc, const char *argv[])
 {
-	uint32_t left_size = 0;
-	uint32_t right_size = 0;
+	/*test size of types on x64*/
+	//printf("Sizeof(int) = %d", sizeof(int));
+	//printf("Sizeof(Int64) = %d", sizeof(__int64));
+	//printf("Sizeof(int*) = %d", sizeof(int*));
+	//exit(-1);
 
-	lhsVariable* lefts;
-    uint32_t* rights;
-    std::pair <lhsVariable*, uint32_t*> array_representation_of_bes;
+	/*vars for Milans stuff*/
+	//uint32_t left_size = 0;
+	//uint32_t right_size = 0;
+	//lhsVariable* lefts;
+	//uint32_t* rights;
+	//std::pair <lhsVariable*, uint32_t*> array_representation_of_bes;
+	
+	int strLen;
+	char *infile;
 
-	parse(argv[1]);
-    //graphBES();
-	mybes.numVars = computeNumVars();
-	computeDistance();
+	// put default inputfile here - or leave blank
+	infile = "cwi_1_2.bcg.nll.bes";
 
+	// use filename from cmd in case it is supplied
+	if (argv[1]) {
+		strLen = strlen(argv[1]);
+		infile = (char*) malloc(sizeof(char) * (strLen + 1));
+		infile = strcpy(infile, argv[1]);
+	}
+
+	// parse input BES file
+	printf("Parsing %s... \t\t\t\t", infile);
+	parse(infile);
+	printf("[done]\n");
+
+	initBES();
+
+	evaluateBES(infile, 0);
+
+
+	/*more of Milans stuff*/
 	//solver1* mySolver = new solver1();
 
 	//void* dataStructure = mySolver->createDataStructure(mybes);
@@ -38,11 +63,11 @@ int main (int argc, const char *argv[])
 	//lefts = array_representation_of_bes.first;
 	//rights = array_representation_of_bes.second;
 
-	//
-
 	//printf("%d\n", left_size);
 
 	//mySolver->print_array_representation_of_bes (lefts, rights, left_size);
 
-    return 0;
+	printf("Good bye!\n\n");
+
+    return EXIT_SUCCESS;
 }

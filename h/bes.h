@@ -10,11 +10,13 @@
 #ifndef BES_H
 #define BES_H
 
-#include <stdlib.h>
+#include <cilk/cilk.h>
+#include <cilk/common.h>
+
 
 typedef enum varType{
-      F,
       T,
+      F,
       global,
       local,
 	  conjunct,
@@ -31,6 +33,7 @@ typedef struct eqn{
     int varCount;
     int lhsId;
 	int lhs;
+	int count;
     var* rhs;
 }eqn;
 
@@ -41,6 +44,7 @@ typedef struct besblock{
     int mode;
     int eqnCount;
     eqn* eqns;
+	int* refs;
 }besblock;
 
 typedef struct bes{
@@ -50,9 +54,24 @@ typedef struct bes{
 }bes;
 
 
-int computeNumVars();
-void computeDistance();
+int initBES();
+double computeDistance();
 void printBES();
 void graphBES();
+double* solveBES();
+void solveBESReverse();
+void reverseBES();
+void randomizeBES();
+void sortByTerminals();
+void renumberBES();
+void orderDescending();
+void orderAscending();
+void printNumVars();
+void reorderBES();
+void interleaveBS(int intVal);
+
+void shuffleBES();
+
+void evaluateBES(const char* filename, int runs);
 
 #endif

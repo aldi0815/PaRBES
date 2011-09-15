@@ -166,6 +166,7 @@ mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs
 {
 mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].type = local;
 mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].localRef = $1;
+mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].rhs[mybes.blocks[mybes.blockCount].eqns[mybes.blocks[mybes.blockCount].eqnCount].varCount].globalRef = mybes.blockCount;
 }
 
 | globalvariableidentifier 
