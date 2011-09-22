@@ -34,7 +34,8 @@ int main (int argc, const char *argv[])
 	char *infile;
 
 	// put default inputfile here - or leave blank
-	infile = "cwi_1_2.bcg.nll.bes";
+	infile = "cwi_142_925.bcg.ndl.bes";
+	infile = "adtest.bes";
 
 	// use filename from cmd in case it is supplied
 	if (argv[1]) {
@@ -44,7 +45,7 @@ int main (int argc, const char *argv[])
 	}
 
 	// parse input BES file
-	printf("Parsing %s... \t\t\t\t", infile);
+	printf("Parsing %-50.30s \t\t", infile);
 	parse(infile);
 	printf("[done]\n");
 

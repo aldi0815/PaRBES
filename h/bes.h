@@ -59,6 +59,7 @@ double computeDistance();
 void printBES();
 void graphBES();
 double* solveBES();
+double* solveBESBottomUp();
 void solveBESReverse();
 void reverseBES();
 void randomizeBES();

@@ -208,6 +208,7 @@ void initLHS() {
 		// iterate over equations
 		for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
 
+			//mybes.blocks[i].eqns[j].lhs = (!mybes.blocks[i].sign);	// inverse initial approximation
 			mybes.blocks[i].eqns[j].lhs = mybes.blocks[i].sign;	// initial approximation
 			mybes.blocks[i].eqns[j].count = 0; //debug info
 
@@ -218,6 +219,7 @@ void initLHS() {
 double* solveBES() {
 
 	bool b = true;		// true as long as variables change within an iteration
+	bool bb = true;
 	bool tmp1, tmp2;	// store previous value of lhs
     int i, j, k;		// loops
 	int iterations, changes, sumChanges;
@@ -241,8 +243,12 @@ double* solveBES() {
 		res = (double*) realloc(res, (sizeof(double) * (iterations + 2)));
 
 		// iterate over blocks
-		for (i=0; i< mybes.blockCount; i++) {
-      
+		for (i = 0; i < mybes.blockCount; i++) {
+
+			while(bb) {
+
+				bb = false;
+
 			// iterate over equations
 			for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
 
@@ -251,10 +257,14 @@ double* solveBES() {
 
 				if ( mybes.blocks[i].eqns[j].rhs[0].type == T) tmp2 = true;			// terminal true
 				else if ( mybes.blocks[i].eqns[j].rhs[0].type == F ) tmp2 = false;	// terminal false
-				else if ( mybes.blocks[i].eqns[j].varCount > 0 ) { 					// variable(s)
+
+				else if ( mybes.blocks[i].eqns[j].rhs[0].type == local || mybes.blocks[i].eqns[j].rhs[0].type == global ) { // variable(s)
 
 					// assignment of truth value of the first var of the rhs
 					tmp2 = mybes.blocks[mybes.blocks[i].eqns[j].rhs[0].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[0].globalRef].refs[mybes.blocks[i].eqns[j].rhs[0].localRef]].lhs;
+					//printf("X%d_%d = X%d_%d = %d\n", i, mybes.blocks[i].eqns[j].lhsId, mybes.blocks[i].eqns[j].rhs[0].globalRef, mybes.blocks[i].eqns[j].rhs[0].localRef, tmp);
+
+					//printf("X%d = X%d_%d", j, mybes.blocks[i].eqns[j].rhs[0].localRef, mybes.blocks[i].eqns[j].rhs[0].globalRef);
 
 					// iterate over remaining rhs variables
 					if (mybes.blocks[i].eqns[j].varCount > 1 ) {
@@ -264,12 +274,12 @@ double* solveBES() {
 								switch (mybes.blocks[i].eqns[j].rhs[1].type)
 								{   
 									case conjunct:
-										//tmp2 &= mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].eqns[mybes.blocks[i].eqns[j].rhs[k].localRef].lhs;
+										//printf(" and X%d_%d", mybes.blocks[i].eqns[j].rhs[k].localRef, mybes.blocks[i].eqns[j].rhs[k].globalRef);
 										tmp2 &= mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].refs[mybes.blocks[i].eqns[j].rhs[k].localRef]].lhs;
 										break;
                         
 									case disjunct:
-										//tmp2 |= mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].eqns[mybes.blocks[i].eqns[j].rhs[k].localRef].lhs;
+										//printf(" or X%d_%d", mybes.blocks[i].eqns[j].rhs[k].localRef, mybes.blocks[i].eqns[j].rhs[k].globalRef);
 										tmp2 |= mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].refs[mybes.blocks[i].eqns[j].rhs[k].localRef]].lhs;
 										break;
 
@@ -281,20 +291,140 @@ double* solveBES() {
 
 				} // end if	
 
+				//printf("\n");
 				
 				if (tmp1 != tmp2) {
 					mybes.blocks[i].eqns[j].lhs = tmp2;
 					changes++;
 					b = true; // continue as long as variables change
+					bb = true;
 				}
 
 			} //end equation
+		}
 		} // end block
 
 		sumChanges += changes;
-		res[iterations+1] = (double) changes/(double) mybes.numVars;
+		res[iterations+1] = (double) changes; // /(double) mybes.numVars;
 
 	} // end while
+
+	for (i = 1; i < iterations; i++) {
+
+		res[i+1] /= (double) sumChanges;
+	}
+
+	res[1] = sumChanges;	
+	return res;
+}
+
+double* solveBESBottomUp() {
+
+	bool b = true;		// true as long as variables change within an iteration
+	bool tmp1, tmp2;	// store previous value of lhs
+    int i, j, k;		// loops
+	int iterations, changes, sumChanges;
+	double* res;
+
+	sumChanges = 0;
+	iterations = 0;
+	res = (double*) malloc(sizeof(double) * 2);
+
+	initLHS();
+	res[1] = computeDistance();
+
+	// loop over entire BES
+	while(b) {
+
+		b = false;
+		//changes = 0;
+		//iterations++;
+		//res[0] = iterations;
+		//res = (double*) realloc(res, (sizeof(double) * (iterations + 2)));
+
+		// iterate over blocks
+		for (i = mybes.blockCount - 1; i >= 0; i--) {
+
+
+			bool bb = true;
+
+			while(bb) {
+
+				bb = false;
+
+				changes = 0;
+				iterations++;
+				res[0] = iterations;
+				res = (double*) realloc(res, (sizeof(double) * (iterations + 2)));
+
+
+				// iterate over equations
+				for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
+
+					//initial value of current variable
+					tmp1 = mybes.blocks[i].eqns[j].lhs;
+
+					if ( mybes.blocks[i].eqns[j].rhs[0].type == T) tmp2 = true;			// terminal true
+					else if ( mybes.blocks[i].eqns[j].rhs[0].type == F ) tmp2 = false;	// terminal false
+
+					else if ( mybes.blocks[i].eqns[j].rhs[0].type == local || mybes.blocks[i].eqns[j].rhs[0].type == global ) { // variable(s)
+
+						// assignment of truth value of the first var of the rhs
+						//printf("X%d = X%d_%d", j, mybes.blocks[i].eqns[j].rhs[0].localRef, mybes.blocks[i].eqns[j].rhs[0].globalRef);
+						tmp2 = mybes.blocks[mybes.blocks[i].eqns[j].rhs[0].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[0].globalRef].refs[mybes.blocks[i].eqns[j].rhs[0].localRef]].lhs;
+					
+						// iterate over remaining rhs variables
+						if (mybes.blocks[i].eqns[j].varCount > 1 ) {
+
+							for(k = 2; k < mybes.blocks[i].eqns[j].varCount; k += 2) {
+
+									switch (mybes.blocks[i].eqns[j].rhs[1].type)
+									{   
+										case conjunct:
+											//printf(" and X%d_%d", mybes.blocks[i].eqns[j].rhs[k].localRef, mybes.blocks[i].eqns[j].rhs[k].globalRef);
+											tmp2 &= mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].refs[mybes.blocks[i].eqns[j].rhs[k].localRef]].lhs;
+											break;
+                        
+										case disjunct:
+											//printf(" or X%d_%d", mybes.blocks[i].eqns[j].rhs[k].localRef, mybes.blocks[i].eqns[j].rhs[k].globalRef);
+											tmp2 |= mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].refs[mybes.blocks[i].eqns[j].rhs[k].localRef]].lhs;
+											break;
+
+										default:
+											continue;
+									} // end switch
+							}//end variables
+						}
+
+					} // end if	
+
+					//printf("\n");
+				
+					if (tmp1 != tmp2) {
+						mybes.blocks[i].eqns[j].lhs = tmp2;
+						changes++;
+						b = true;	// continue as long as variables change
+						bb = true;	
+					} //end if
+
+				} //end for equations
+
+				sumChanges += changes;
+				res[iterations+1] = (double) changes; // /(double) mybes.numVars;
+
+			} // end while eqnations change
+
+		} // end for blocks
+
+		//sumChanges += changes;
+		//res[iterations+1] = (double) changes; // /(double) mybes.numVars;
+
+	} // end while blocks change
+
+	for (i = 1; i < iterations; i++) {
+
+		res[i+1] /= (double) sumChanges;
+	}
 
 	res[1] = sumChanges;	
 	return res;
@@ -340,10 +470,12 @@ double* parSolveBES() {
 
 				if ( mybes.blocks[i].eqns[j].rhs[0].type == T) tmp2 = 1;			// terminal true
 				else if ( mybes.blocks[i].eqns[j].rhs[0].type == F ) tmp2 = 0;		// terminal false
-				else if ( mybes.blocks[i].eqns[j].varCount > 0 ) { 					// variable(s)
+
+				else if ( mybes.blocks[i].eqns[j].rhs[0].type == local || mybes.blocks[i].eqns[j].rhs[0].type == global ) { // variable(s)
 
 					// assignment of truth value of the first var of the rhs
 					tmp2 = mybes.blocks[mybes.blocks[i].eqns[j].rhs[0].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[0].globalRef].refs[mybes.blocks[i].eqns[j].rhs[0].localRef]].lhs;
+					//printf("X%d_%d = X%d_%d = %d\n", i, mybes.blocks[i].eqns[j].lhsId, mybes.blocks[i].eqns[j].rhs[0].globalRef, mybes.blocks[i].eqns[j].rhs[0].localRef, tmp);
 
 					// iterate over remaining rhs variables
 					if (mybes.blocks[i].eqns[j].varCount > 1 ) {
@@ -381,7 +513,7 @@ double* parSolveBES() {
 		} // end block
 
 		sumChanges += changes;
-		res[iterations+1] = (double) changes/(double) mybes.numVars;
+		res[iterations+1] = (double) changes; // /(double) mybes.numVars;
 
 	} // end while
 
@@ -395,23 +527,48 @@ void reverseBES() {
 	int tmpRef;
 	eqn tmp;
 
-	printf("Reversing BES... \t\t\t\t\t\t");
+	printf("Reversing BES... \t\t\t\t\t\t\t");
+
+		//// iterate over blocks
+		//printf("\n");
+		//for (i = 0; i < mybes.blockCount; i++) {
+
+		//	// iterate over equations
+		//	for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
+		//
+		//		printf("Ref: %d \t LHS: %d\n", mybes.blocks[i].refs[j], mybes.blocks[i].eqns[j].lhsId);
+
+		//	}
+		//}
+		//printf("- - -\n");
 
 		// iterate over blocks
 		for (i = 0; i < mybes.blockCount; i++) {
       
 			// iterate over equations
-			for(j = 0; j < (mybes.blocks[i].eqnCount)/2; j++) {
+			for(j = 0; j < mybes.blocks[i].eqnCount / 2; j++) {
 
 				tmp = mybes.blocks[i].eqns[j];
-				mybes.blocks[i].eqns[j] = mybes.blocks[i].eqns[mybes.blocks[i].eqnCount - (j + 1)];
-				mybes.blocks[i].eqns[mybes.blocks[i].eqnCount - (j + 1)] = tmp;
+				mybes.blocks[i].eqns[j] = mybes.blocks[i].eqns[(mybes.blocks[i].eqnCount - 1) - j];
+				mybes.blocks[i].eqns[(mybes.blocks[i].eqnCount - 1) - j] = tmp;
 
-				tmpRef = mybes.blocks[i].refs[j];
-				mybes.blocks[i].refs[j] = (mybes.blocks[i].eqnCount - (j + 1));
-				mybes.blocks[i].refs[mybes.blocks[i].eqnCount - (j + 1)] = tmpRef;
+				tmpRef = mybes.blocks[i].refs[mybes.blocks[i].eqns[j].lhsId];
+				mybes.blocks[i].refs[mybes.blocks[i].eqns[j].lhsId] = mybes.blocks[i].refs[mybes.blocks[i].eqns[(mybes.blocks[i].eqnCount - 1) - j].lhsId];
+				mybes.blocks[i].refs[mybes.blocks[i].eqns[(mybes.blocks[i].eqnCount - 1) - j].lhsId] = tmpRef;
 			}
 		}
+
+		//// iterate over blocks
+		//for (i = 0; i < mybes.blockCount; i++) {
+
+		//	// iterate over equations
+		//	for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
+		//
+		//		printf("Ref: %d \t LHS: %d\n", mybes.blocks[i].refs[j], mybes.blocks[i].eqns[j].lhsId);
+
+		//	}
+		//}
+
 	printf("[done]\n");
 }
 
@@ -425,32 +582,60 @@ void randomizeBES() {
 
 	eqn tmp;
 
-	printf("Randomizing BES... \t\t\t\t\t");
+	printf("Randomizing BES... \t\t\t\t\t\t\t");
+
+		//// iterate over blocks
+		//printf("\n");
+		//for (i = 0; i < mybes.blockCount; i++) {
+
+		//	// iterate over equations
+		//	for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
+		//
+		//		printf("Ref: %d \t LHS: %d\n", mybes.blocks[i].refs[j], mybes.blocks[i].eqns[j].lhsId);
+
+		//	}
+		//}
+		//printf("- - -\n");
 
 		// iterate over blocks
 		for (i = 0; i < mybes.blockCount; i++) {
 
+			if ( mybes.blocks[i].eqnCount > 1) {
 			// iterate over equations
 			for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
 
+				
 				do {
 
 					rnd = rand() % mybes.blocks[i].eqnCount;
 				
 				} while (rnd == j); //((mybes.blocks[i].eqns[rnd].lhsId == j) || (mybes.blocks[i].eqns[j].lhsId == rnd) || (rnd == j));
+	
 
 				tmp = mybes.blocks[i].eqns[rnd];
 				mybes.blocks[i].eqns[rnd] = mybes.blocks[i].eqns[j];
 				mybes.blocks[i].eqns[j] = tmp;
 
-
-				tmpRef = mybes.blocks[i].refs[rnd];
-				mybes.blocks[i].refs[rnd] = mybes.blocks[i].refs[j];
-				mybes.blocks[i].refs[j] = tmpRef;
+				tmpRef = mybes.blocks[i].refs[mybes.blocks[i].eqns[rnd].lhsId];
+				mybes.blocks[i].refs[mybes.blocks[i].eqns[rnd].lhsId] = mybes.blocks[i].refs[mybes.blocks[i].eqns[j].lhsId];
+				mybes.blocks[i].refs[mybes.blocks[i].eqns[j].lhsId] = tmpRef;
 
 				//printf("%d\n%d\n\n", mybes.blocks[i].eqns[j].lhsId, mybes.blocks[i].eqns[mybes.blocks[i].eqnCount-(j+1)].lhsId);
 			}
+			}
 		}
+
+		//// iterate over blocks
+		//for (i = 0; i < mybes.blockCount; i++) {
+
+		//	// iterate over equations
+		//	for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
+		//
+		//		printf("Ref: %d \t LHS: %d\n", mybes.blocks[i].refs[j], mybes.blocks[i].eqns[j].lhsId);
+
+		//	}
+		//}
+
 	printf("[done]\n");
 }
 
@@ -461,26 +646,50 @@ void shuffleBES() {
 
 	eqn tmp;
 
-	printf("Randomizing BES... \t\t\t\t\t");
+	printf("Shuffling BES... \t\t\t\t\t");
+
+		//// iterate over blocks
+		for (i = 0; i < mybes.blockCount; i++) {
+
+			// iterate over equations
+			for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
+		
+				printf("Ref: %d \t LHS: %d\n", mybes.blocks[i].refs[j], mybes.blocks[i].eqns[j].lhsId);
+
+			}
+		}
 
 		// iterate over blocks
 		for (i = 0; i < mybes.blockCount; i++) {
 
 			// iterate over equations
-			for(j = 0; j < mybes.blocks[i].eqnCount - 1; j += 2) {
+			for(j = 1; j < mybes.blocks[i].eqnCount; j += 2) {
+
+				printf("j: %d \t eqnCount: %d\n", j, mybes.blocks[i].eqnCount);
 
 				tmp = mybes.blocks[i].eqns[j];
-				mybes.blocks[i].eqns[j] = mybes.blocks[i].eqns[j + 1];
-				mybes.blocks[i].eqns[j + 1] = tmp;
+				mybes.blocks[i].eqns[j] = mybes.blocks[i].eqns[(mybes.blocks[i].eqnCount / 2) + (j - 1)];
+				mybes.blocks[i].eqns[(mybes.blocks[i].eqnCount / 2) + j] = tmp;
 
-
-				tmpRef = mybes.blocks[i].refs[j];
-				mybes.blocks[i].refs[j] = mybes.blocks[i].refs[j + 1];
-				mybes.blocks[i].refs[j + 1] = tmpRef;
+				tmpRef = mybes.blocks[i].refs[mybes.blocks[i].eqns[j].lhsId];
+				mybes.blocks[i].refs[mybes.blocks[i].eqns[j].lhsId] = mybes.blocks[i].refs[mybes.blocks[i].eqns[(mybes.blocks[i].eqnCount / 2) + (j -1)].lhsId];
+				mybes.blocks[i].refs[mybes.blocks[i].eqns[(mybes.blocks[i].eqnCount / 2) + (j-1)].lhsId] = tmpRef;
 
 				//printf("%d\n%d\n\n", mybes.blocks[i].eqns[j].lhsId, mybes.blocks[i].eqns[mybes.blocks[i].eqnCount-(j+1)].lhsId);
 			}
 		}
+
+		//// iterate over blocks
+		for (i = 0; i < mybes.blockCount; i++) {
+
+			// iterate over equations
+			for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
+		
+				printf("Ref: %d \t LHS: %d\n", mybes.blocks[i].refs[j], mybes.blocks[i].eqns[j].lhsId);
+
+			}
+		}
+
 	printf("[done]\n");
 }
 
@@ -503,9 +712,9 @@ void reorderBES() {
 				mybes.blocks[i].eqns[j + 1] = tmp;
 
 
-				tmpRef = mybes.blocks[i].refs[j];
-				mybes.blocks[i].refs[j] = mybes.blocks[i].refs[j + 1];
-				mybes.blocks[i].refs[j + 1] = tmpRef;
+				tmpRef = mybes.blocks[i].refs[mybes.blocks[i].eqns[j].lhsId];
+				mybes.blocks[i].refs[mybes.blocks[i].eqns[j].lhsId] = mybes.blocks[i].refs[mybes.blocks[i].eqns[(mybes.blocks[i].eqnCount / 2) + j].lhsId];
+				mybes.blocks[i].refs[mybes.blocks[i].eqns[(mybes.blocks[i].eqnCount / 2) + j].lhsId] = tmpRef;
 
 				//printf("%d\n%d\n\n", mybes.blocks[i].eqns[j].lhsId, mybes.blocks[i].eqns[mybes.blocks[i].eqnCount-(j+1)].lhsId);
 			}
@@ -543,22 +752,50 @@ void sortByTerminals() {
 void interleaveBES(int intVal) {
 
 	int i,j;
+	int tmpRef;
 	eqn tmp;
+
+		//// iterate over blocks
+		for (i = 0; i < mybes.blockCount; i++) {
+
+			// iterate over equations
+			for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
+		
+				printf("Ref: %d \t LHS: %d\n", mybes.blocks[i].refs[j], mybes.blocks[i].eqns[j].lhsId);
+
+			}
+		}
 
 	// iterate over blocks
 	for (i = 0; i < mybes.blockCount; i++) {
 
 		// iterate over equations
-		for(j = 0; j < (mybes.blocks[i].eqnCount-1)/intVal; j++) {
+		for(j = 0; j < (mybes.blocks[i].eqnCount - 1) / intVal; j++) {
 
-			if( j % (intVal -1)) {
+			if( j % (intVal - 1)) {
 				
 				tmp = mybes.blocks[i].eqns[j];
-				mybes.blocks[i].eqns[j] = mybes.blocks[i].eqns[j + (j % (intVal -1)) * (mybes.blocks[i].eqnCount-1)/intVal];
+				mybes.blocks[i].eqns[j] = mybes.blocks[i].eqns[j + (j % (intVal -1)) * (mybes.blocks[i].eqnCount - 1) / intVal];
 				mybes.blocks[i].eqns[j + (j % (intVal -1)) * (mybes.blocks[i].eqnCount-1)/intVal] = tmp;
+
+				tmpRef = mybes.blocks[i].refs[mybes.blocks[i].eqns[j].lhsId];
+				mybes.blocks[i].refs[mybes.blocks[i].eqns[j].lhsId] = mybes.blocks[i].refs[mybes.blocks[i].eqns[j + (j % (intVal -1)) * (mybes.blocks[i].eqnCount-1)/intVal].lhsId];
+				mybes.blocks[i].refs[mybes.blocks[i].eqns[j + (j % (intVal -1)) * (mybes.blocks[i].eqnCount-1)/intVal].lhsId] = tmpRef;
 			}
 		}
 	}
+
+		//// iterate over blocks
+		for (i = 0; i < mybes.blockCount; i++) {
+
+			// iterate over equations
+			for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
+		
+				printf("Ref: %d \t LHS: %d\n", mybes.blocks[i].refs[j], mybes.blocks[i].eqns[j].lhsId);
+
+			}
+		}
+
 }
 
 void renumberBES() {
@@ -647,7 +884,19 @@ void orderAscending() {
 
 	steps = 1;
 
-	printf("reordering in ascending order of RHSs... \t\t");
+	printf("reordering in ascending order of RHSs... \t\t\t\t");
+	
+	/// iterate over blocks
+	//printf("\n");	
+	//for (i = 0; i < mybes.blockCount; i++) {
+
+	//	// iterate over equations
+	//	for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
+	//	
+	//		printf("Ref: %d \t LHS: %d \t RHS: %d\n", mybes.blocks[i].refs[j], mybes.blocks[i].eqns[j].lhsId, mybes.blocks[i].eqns[j].varCount);
+
+	//	}
+	//}
 
 	// iterate over blocks
 	for (i = 0; i < mybes.blockCount; i++) {
@@ -662,13 +911,12 @@ void orderAscending() {
 				if (mybes.blocks[i].eqns[j].varCount > mybes.blocks[i].eqns[k].varCount) {
 
 					tmp = mybes.blocks[i].eqns[k];
-
 					mybes.blocks[i].eqns[k] = mybes.blocks[i].eqns[j];
 					mybes.blocks[i].eqns[j] = tmp;
 
-					tmpRef = mybes.blocks[i].refs[k];
-					mybes.blocks[i].refs[k] = mybes.blocks[i].refs[j];
-					mybes.blocks[i].refs[j] = tmpRef;
+					tmpRef = mybes.blocks[i].refs[mybes.blocks[i].eqns[k].lhsId];
+					mybes.blocks[i].refs[mybes.blocks[i].eqns[k].lhsId] = mybes.blocks[i].refs[mybes.blocks[i].eqns[j].lhsId];
+					mybes.blocks[i].refs[mybes.blocks[i].eqns[j].lhsId] = tmpRef;
 				}
 			}
 		
@@ -682,6 +930,19 @@ void orderAscending() {
 		}
 		printf("]");
 	}
+
+	//// iterate over blocks
+	//printf("\n");	
+	//for (i = 0; i < mybes.blockCount; i++) {
+
+	//	// iterate over equations
+	//	for(j = 0; j < mybes.blocks[i].eqnCount; j++) {
+	//	
+	//		printf("Ref: %d \t LHS: %d \t RHS: %d\n", mybes.blocks[i].refs[j], mybes.blocks[i].eqns[j].lhsId, mybes.blocks[i].eqns[j].varCount);
+
+	//	}
+	//}
+
 	printf("\n");
 }
 
@@ -786,8 +1047,8 @@ void evaluateBES(const char* filename, int runs) {
 	tmp = computeDistance();
 	max = min = avrg = tmp;
 	data = (double**) malloc(sizeof(double*));
-	printf("Solving original BES... \t\t\t\t\t");
-	data[0] = solveBES();
+	printf("Solving original BES... \t\t\t\t\t\t");
+	data[0] = solveBESBottomUp();
 	printf("[done]\n");
 
 	strLen = strlen(filename);
@@ -797,29 +1058,27 @@ void evaluateBES(const char* filename, int runs) {
 	writeSolution2File(solFile, mybes);
 	free(solFile);
 
-	//parallel resolution of BES
-	tmp = computeDistance();
-	data = (double**) realloc(data, sizeof(double*) * 2);
-	printf("Solving original BES in parallel... \t\t\t\t");
-	data[1] = parSolveBES();
-	printf("[done]\n");
+	////parallel resolution of BES
+	//tmp = computeDistance();
+	//data = (double**) realloc(data, sizeof(double*) * 2);
+	//printf("Solving original BES in parallel... \t\t\t\t");
+	//data[1] = parSolveBES();
+	//printf("[done]\n");
 
-	strLen = strlen(filename);
-	solFile = (char*) malloc(sizeof(char) * (strLen + 10));
-	strcpy(solFile, filename);
-	strcat(solFile, ".orig.par");
-	writeSolution2File(solFile, mybes);
-	free(solFile);
+	//strLen = strlen(filename);
+	//solFile = (char*) malloc(sizeof(char) * (strLen + 10));
+	//strcpy(solFile, filename);
+	//strcat(solFile, ".orig.par");
+	//writeSolution2File(solFile, mybes);
+	//free(solFile);
 
 	//reversed BES
 	reverseBES();
-	//tmp = computeDistance();
-	data = (double**) realloc(data, sizeof(double*) * 3);
-	printf("Solving reversed BES... \t\t\t\t\t");
-	data[2] = solveBES();
+	data = (double**) realloc(data, sizeof(double*) * 2);
+	printf("Solving reversed BES... \t\t\t\t\t\t");
+	data[1] = solveBESBottomUp();
 	printf("[done]\n");
 
-	reverseBES();
 	strLen = strlen(filename);
 	solFile = (char*) malloc(sizeof(char) * (strLen + 9));
 	strcpy(solFile, filename);
@@ -827,21 +1086,20 @@ void evaluateBES(const char* filename, int runs) {
 	writeSolution2File(solFile, mybes);
 	free(solFile);
 
-	//parallel resolution of reversed BES
-	//tmp = computeDistance();
-	reverseBES();
-	data = (double**) realloc(data, sizeof(double*) * 4);
-	printf("Solving reversed BES in parallel... \t\t\t\t");
-	data[3] = parSolveBES();
-	printf("[done]\n");
+	////parallel resolution of reversed BES
+	//reverseBES();
+	//data = (double**) realloc(data, sizeof(double*) * 4);
+	//printf("Solving reversed BES in parallel... \t\t\t\t");
+	//data[3] = parSolveBES();
+	//printf("[done]\n");
 
-	reverseBES();
-	strLen = strlen(filename);
-	solFile = (char*) malloc(sizeof(char) * (strLen + 9));
-	strcpy(solFile, filename);
-	strcat(solFile, ".rev.par");
-	writeSolution2File(solFile, mybes);
-	free(solFile);
+	//reverseBES();
+	//strLen = strlen(filename);
+	//solFile = (char*) malloc(sizeof(char) * (strLen + 9));
+	//strcpy(solFile, filename);
+	//strcat(solFile, ".rev.par");
+	//writeSolution2File(solFile, mybes);
+	//free(solFile);
 
 	/*start uncomment here*/
 	////strLen = strlen(filename);
@@ -851,21 +1109,13 @@ void evaluateBES(const char* filename, int runs) {
 
 	////writeSolution2File(solFile, mybes);
 	////free(solFile);
-
 	
-	//orderAscending();
-	
-	//tmp = computeDistance();
-	//if( tmp < min) {min = tmp; minIter++;}
-	//if( tmp > max) {max = tmp; maxIter++;}
-	
-	//ascending ordering BES
-	shuffleBES();
-	data = (double**) realloc(data, sizeof(double*) * 5);
-	printf("Solving BES with ascending RHSs... \t\t\t");
-	data[4] = solveBES();
+	//randomized BES
+	randomizeBES();
+	data = (double**) realloc(data, sizeof(double*) * 3);
+	printf("Solving randomized BES... \t\t\t\t\t\t");
+	data[2] = solveBESBottomUp();
 	printf("[done]\n");
-
 
 	strLen = strlen(filename);
 	solFile = (char*) malloc(sizeof(char) * (strLen + 9));
@@ -874,48 +1124,48 @@ void evaluateBES(const char* filename, int runs) {
 	writeSolution2File(solFile, mybes);
 	free(solFile);
 
-	data = (double**) realloc(data, sizeof(double*) * 6);
-	printf("Solving BES with ascending RHSs in parallel... \t\t");
-	data[5] = parSolveBES();
+/*
+
+	//ascending RHSs
+	orderAscending();
+	data = (double**) realloc(data, sizeof(double*) * 4);
+	printf("Solving BES with ascending RHSs... \t\t\t\t\t");
+	data[3] = solveBESBottomUp();
 	printf("[done]\n");
 
-
-	////ascending ordering BES (reverse BES)
-	//reverseBES();
-	////tmp = computeDistance();
-	//if( tmp < min) {min = tmp; minIter++;}
-	//if( tmp > max) {max = tmp; maxIter++;}
-	//data = (double**) realloc(data, sizeof(double*) * 7);
-	//printf("Solving BES with descending RHSs... \t\t\t");
-	//data[6] = solveBES();
+	strLen = strlen(filename);
+	solFile = (char*) malloc(sizeof(char) * (strLen + 9));
+	strcpy(solFile, filename);
+	strcat(solFile, ".asc.seq");
+	writeSolution2File(solFile, mybes);
+	free(solFile);
+	//data = (double**) realloc(data, sizeof(double*) * 6);
+	//printf("Solving BES with ascending RHSs in parallel... \t\t");
+	//data[5] = parSolveBES();
 	//printf("[done]\n");
 
+
+	//descending RHSs
+	reverseBES();
+	data = (double**) realloc(data, sizeof(double*) * 5);
+	printf("Solving BES with descending RHSs... \t\t\t\t\t");
+	data[4] = solveBESBottomUp();
+	printf("[done]\n");
+
+	strLen = strlen(filename);
+	solFile = (char*) malloc(sizeof(char) * (strLen + 9));
+	strcpy(solFile, filename);
+	strcat(solFile, ".dsc.seq");
+	writeSolution2File(solFile, mybes);
+	free(solFile);
+
+*/
 
 	//data = (double**) realloc(data, sizeof(double*) * 8);
 	//printf("Solving BES with descending RHSs in parallel... \t");
 	//data[7] = parSolveBES();
 	//printf("[done]\n");
-	/*end uncomment here*/
 
-
-	//reversed BES (data[1])
-	//reverseBES();
-	//renumberBES();
-	//tmp = computeDistance();
-	//if( tmp < min) {min = tmp; minIter++;}
-	//if( tmp > max) {max = tmp; maxIter++;}
-	//data = (double**) realloc(data, sizeof(double*) * 2);
-	//data[1] = solveBES();
-
-	//strLen = strlen(filename);
-	//solFile = (char*) malloc(sizeof(char) * (strLen + 4));
-	//strcpy(solFile, filename);
-	//strcat(solFile, "rev");
-
-	//writeBES2File(filename, mybes);
-	//reverseBES();
-	//writeSolution2File(solFile, mybes);
-	//free(solFile);
 
 
 	//interleave BES by factor 2 (data[2])
@@ -929,44 +1179,14 @@ void evaluateBES(const char* filename, int runs) {
 	//data = (double**) realloc(data, sizeof(double*) * 3);
 	//data[2] = solveBES();
 
-	//for(i = 0; i < runs; i++) {
-	//	randomizeBES();
-	//	renumberBES();
-	//	tmp = computeDistance();
-
-	//	if( tmp < min) {
-	//		min = tmp;
-	//		minIter++;
-	//		data = (double**) realloc(data, sizeof(double*) * (minIter + maxIter + 1));
-	//		data[minIter + maxIter] = solveBES();
-	//	}
-
-	//	if( tmp > max) {
-	//		max = tmp;
-	//		maxIter++;
-	//		data = (double**) realloc(data, sizeof(double*) * (minIter + maxIter + 1));
-	//		data[minIter + maxIter] = solveBES();
-	//	}
-	//}
-
-	//printf("avrg:\t %4.1f\n", avrg);
-	//printf("min:\t %4.1f (%d)\n", min, minIter);
-	//printf("max:\t %4.1f (%d)\n", max, maxIter);
-
-	//printf("Computations: %d\n", (minIter + maxIter + 1));
-
-	////for(i = 0; i < (minIter + maxIter + 1); i++) {
-	////	printf("Data[%d][0] %f\n", i, data[i][0]);
-	////}
-
-	//writeEval2File(filename, data, (minIter + maxIter + 1));
-
-	writeEval2File(filename, data, 6);
+	writeEval2File(filename, data, 3);
 
 
-	// dealocate memory
-	//for (i=0; i < rows; i++) {
-	//	free(data[i]);
-	//}
-	//free(data);
+	//dealocate memory
+	for (i=0; i < rows; i++) {
+
+		free(data[i]);
+	}
+
+	free(data);
 }
