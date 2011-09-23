@@ -430,95 +430,94 @@ double* solveBESBottomUp() {
 	return res;
 }
 
-double* parSolveBES() {
-
-	bool b;			// true as long as variables change within an iteration
-	//bool tmp1, tmp2;		// store previous value of lhs
-    int i;//j,k;			// for loops
-	int iterations, changes, sumChanges;
-	double* res;
+int parSolveBES() {
+	
+	bool b;		// true as long as variables change within an iteration
+    int i;		// loops
+	int iterations;
 
 	b = true;
 	iterations = 0;
-	sumChanges = 0;
-	res = (double*) malloc(sizeof(double) * 2);
 
 	initLHS();
-	res[1] = computeDistance();
 
+	// loop over entire BES
 	while(b) {
 
 		b = false;
-		changes = 0;
-
-		iterations++;
-		res[0] = iterations;
-
-		res = (double*) realloc(res, (sizeof(double) * (iterations + 2)));
-
-		//printf("%d ", iterations);
 
 		// iterate over blocks
-		for (i=0; i< mybes.blockCount; i++) {
-      
-			// iterate over equations
-			cilk_for (int j = 0; j < mybes.blocks[i].eqnCount; j++) {
+		for (i = mybes.blockCount - 1; i >= 0; i--) {
 
-				bool tmp1, tmp2;
 
-				tmp1 = mybes.blocks[i].eqns[j].lhs;
+			bool bb = true;
 
-				if ( mybes.blocks[i].eqns[j].rhs[0].type == T) tmp2 = 1;			// terminal true
-				else if ( mybes.blocks[i].eqns[j].rhs[0].type == F ) tmp2 = 0;		// terminal false
+			while(bb) {
 
-				else if ( mybes.blocks[i].eqns[j].rhs[0].type == local || mybes.blocks[i].eqns[j].rhs[0].type == global ) { // variable(s)
+				bb = false;
+				iterations++;
 
-					// assignment of truth value of the first var of the rhs
-					tmp2 = mybes.blocks[mybes.blocks[i].eqns[j].rhs[0].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[0].globalRef].refs[mybes.blocks[i].eqns[j].rhs[0].localRef]].lhs;
-					//printf("X%d_%d = X%d_%d = %d\n", i, mybes.blocks[i].eqns[j].lhsId, mybes.blocks[i].eqns[j].rhs[0].globalRef, mybes.blocks[i].eqns[j].rhs[0].localRef, tmp);
+				// iterate over equations
+				cilk_for (int j = 0; j < mybes.blocks[i].eqnCount; j++) {
 
-					// iterate over remaining rhs variables
-					if (mybes.blocks[i].eqns[j].varCount > 1 ) {
+					bool tmp1, tmp2;	// store previous value of lhs
 
-						for(int k = 2; k < mybes.blocks[i].eqns[j].varCount; k += 2) {
+					//initial value of current variable
+					tmp1 = mybes.blocks[i].eqns[j].lhs;
 
-								switch (mybes.blocks[i].eqns[j].rhs[1].type)
-								{   
-									case conjunct:
-										//tmp2 &= mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].eqns[mybes.blocks[i].eqns[j].rhs[k].localRef].lhs;
-										tmp2 &= mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].refs[mybes.blocks[i].eqns[j].rhs[k].localRef]].lhs;
-										break;
+					if ( mybes.blocks[i].eqns[j].rhs[0].type == T) tmp2 = true;			// terminal true
+					else if ( mybes.blocks[i].eqns[j].rhs[0].type == F ) tmp2 = false;	// terminal false
+
+					else if ( mybes.blocks[i].eqns[j].rhs[0].type == local || mybes.blocks[i].eqns[j].rhs[0].type == global ) { // variable(s)
+
+						// assignment of truth value of the first var of the rhs
+						//printf("X%d = X%d_%d", j, mybes.blocks[i].eqns[j].rhs[0].localRef, mybes.blocks[i].eqns[j].rhs[0].globalRef);
+						tmp2 = mybes.blocks[mybes.blocks[i].eqns[j].rhs[0].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[0].globalRef].refs[mybes.blocks[i].eqns[j].rhs[0].localRef]].lhs;
+					
+						// iterate over remaining rhs variables
+						if (mybes.blocks[i].eqns[j].varCount > 1 ) {
+
+							for(int k = 2; k < mybes.blocks[i].eqns[j].varCount; k += 2) {
+
+									switch (mybes.blocks[i].eqns[j].rhs[1].type)
+									{   
+										case conjunct:
+											//printf(" and X%d_%d", mybes.blocks[i].eqns[j].rhs[k].localRef, mybes.blocks[i].eqns[j].rhs[k].globalRef);
+											tmp2 &= mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].refs[mybes.blocks[i].eqns[j].rhs[k].localRef]].lhs;
+											break;
                         
-									case disjunct:
-										//tmp2 |= mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].eqns[mybes.blocks[i].eqns[j].rhs[k].localRef].lhs;
-										tmp2 |= mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].refs[mybes.blocks[i].eqns[j].rhs[k].localRef]].lhs;
-										break;
+										case disjunct:
+											//printf(" or X%d_%d", mybes.blocks[i].eqns[j].rhs[k].localRef, mybes.blocks[i].eqns[j].rhs[k].globalRef);
+											tmp2 |= mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].eqns[mybes.blocks[mybes.blocks[i].eqns[j].rhs[k].globalRef].refs[mybes.blocks[i].eqns[j].rhs[k].localRef]].lhs;
+											break;
 
-									default:
-										continue;
-								} // end switch
-						}//end variables
-					}
+										default:
+											continue;
+									} // end switch
+							}//end variables
+						}
 
-				} // end if	
+					} // end if	
 
+					//printf("\n");
 				
-				if (tmp1 != tmp2) {
-					mybes.blocks[i].eqns[j].lhs = tmp2;
-					changes++;
-					b = true; // continue as long as variables change
-				}
+					if (tmp1 != tmp2) {
+						mybes.blocks[i].eqns[j].lhs = tmp2;
+						//b = true;	// continue as long as variables change
+						bb = true;	
+					} //end if
 
-			} //end equation
-		} // end block
+				} //end for equations
 
-		sumChanges += changes;
-		res[iterations+1] = (double) changes; // /(double) mybes.numVars;
+				b = bb;
 
-	} // end while
+			} // end while eqnations change
 
-	res[1] = sumChanges;	
-	return res;
+		} // end for blocks
+
+	} // end while blocks change
+
+	return iterations;
 }
 
 void reverseBES() {
@@ -1023,6 +1022,15 @@ void printNumRHSVars() {
 			printf("%d\n", mybes.blocks[i].eqns[j].varCount);
 		}
 	}
+}
+
+void solve() {
+
+	printf("Iterations: %d\n", parSolveBES());
+	
+	if(mybes.blocks[0].eqns[0].lhs == 0) printf("False\n");
+	else if (mybes.blocks[0].eqns[0].lhs == 1) printf("False\n");
+	else printf("Error!\n");
 }
 
 void evaluateBES(const char* filename, int runs) {

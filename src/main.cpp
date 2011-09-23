@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "bes.h"
+#include "helpers.h"
 #include "solver1.h"
 
 extern "C" void parse(const char *fileName);
@@ -38,20 +39,40 @@ int main (int argc, const char *argv[])
 	infile = "adtest.bes";
 
 	// use filename from cmd in case it is supplied
-	if (argv[1]) {
-		strLen = strlen(argv[1]);
+	if (argv[2]) {
+		strLen = strlen(argv[2]);
 		infile = (char*) malloc(sizeof(char) * (strLen + 1));
-		infile = strcpy(infile, argv[1]);
+		infile = strcpy(infile, argv[2]);
 	}
 
+	//for (int i = 0; i < argc; i++) {
+	//	printf("argv[%d]: %s\n", i, argv[i]);
+	//}
+
 	// parse input BES file
-	printf("Parsing %-50.30s \t\t", infile);
+	//printf("Parsing %-50.30s \t\t", infile);
 	parse(infile);
-	printf("[done]\n");
+	//printf("[done]\n");
 
-	initBES();
+	printf("%s\n", infile);
 
-	evaluateBES(infile, 0);
+	switch (argv[1][1]) {
+
+		case 'e':	initBES();
+					evaluateBES(infile, 0);
+					break;
+
+		case 'h':	printHelp();
+					break;
+
+		case 's':	initBES();
+					solve();
+					break;
+
+		default:	printf("unknown parameter!\n");
+					exit(EXIT_FAILURE);
+	}
+	
 
 
 	/*more of Milans stuff*/
@@ -67,8 +88,6 @@ int main (int argc, const char *argv[])
 	//printf("%d\n", left_size);
 
 	//mySolver->print_array_representation_of_bes (lefts, rights, left_size);
-
-	printf("Good bye!\n\n");
 
     return EXIT_SUCCESS;
 }

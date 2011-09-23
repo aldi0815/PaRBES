@@ -72,6 +72,8 @@ void reorderBES();
 void interleaveBS(int intVal);
 
 void shuffleBES();
+int parSolveBES();
+void solve();
 
 void evaluateBES(const char* filename, int runs);
 
