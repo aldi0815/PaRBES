@@ -7,6 +7,7 @@
 //
 
 #include <stdio.h>
+#include <windows.h>
 
 #include "bes.h"
 #include "helpers.h"
@@ -15,6 +16,7 @@
 extern "C" void parse(const char *fileName);
 
 extern "C" bes mybes;
+
 
 int main (int argc, const char *argv[])
 {
@@ -37,36 +39,66 @@ int main (int argc, const char *argv[])
 	// put default inputfile here - or leave blank
 	infile = "cwi_142_925.bcg.ndl.bes";
 	infile = "adtest.bes";
-
+	infile = "37_vasy_8082_42933.bcg.ndl.bes";
+	infile = "01_vasy_0_1.bcg.nll.bes";
 	// use filename from cmd in case it is supplied
+
 	if (argv[2]) {
 		strLen = strlen(argv[2]);
 		infile = (char*) malloc(sizeof(char) * (strLen + 1));
 		infile = strcpy(infile, argv[2]);
 	}
 
-	//for (int i = 0; i < argc; i++) {
-	//	printf("argv[%d]: %s\n", i, argv[i]);
-	//}
-
-	// parse input BES file
-	//printf("Parsing %-50.30s \t\t", infile);
-	parse(infile);
-	//printf("[done]\n");
-
-	printf("%s\n", infile);
+	//infile = "04_cwi_3_14.bcg.ndl.bes";
+	//parseBES(infile);
+	//initBES();
+	//evaluateBES(infile, 0);
+	//writeBES2File(infile, mybes);
 
 	switch (argv[1][1]) {
 
-		case 'e':	initBES();
+		case 'd':	parseBES(infile);
+					initBES();
+					writeBES2File(infile, mybes);
+					break;
+
+		case 'e':	parseBES(infile);
+					initBES();
 					evaluateBES(infile, 0);
+					break;
+		
+		case 'g':	parseBES(infile);
+					initBES();
+					graphBES();
 					break;
 
 		case 'h':	printHelp();
 					break;
 
-		case 's':	initBES();
+		case 's':	parseBES(infile);
+					initBES();
 					solve();
+					writeSolution2File(infile, mybes);
+					break;
+
+		case 'x':	parseBES(infile);
+					initBES();
+					reverseBES();
+					writeBES2File(infile, mybes);
+					break;
+
+		case 'r':	parseBES(infile);
+					initBES();
+					randomizeBES();
+					writeBES2File(infile, mybes);
+					break;
+
+		case 't':	parseBES(infile);
+					for (int i = 0; i < 100; i++) {
+						Sleep(500);
+						initBES();
+						evaluateRunTimes(infile, i+1);
+					}
 					break;
 
 		default:	printf("unknown parameter!\n");

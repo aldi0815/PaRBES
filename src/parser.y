@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <time.h>
+#include <sys\timeb.h>
 
 #include "bes.h"
 
@@ -13,7 +14,20 @@
 
 // gloabl data object
 bes mybes;
+
+// helpers
+int gPos;
+fpos_t pos;
+time_t time1;
+time_t time2;
+time_t totalTime;
     
+char *buffer;
+__int64 buffloc;
+__int64 fileLen;
+
+int tmp;
+
 FILE *yyin;
     
 %}
@@ -208,28 +222,50 @@ conjunctive
 
 void parse(const char *fileName) {
     
-    // timing information
-    //unsigned int time, subtime;
-    
-    fopen_s(&yyin, fileName, "r");;
-    
-//    printf("parsing... %s (%p)\n", fileName, yyin);
-    
+	//helpers
+	gPos = 0;
+	time(&time1);
+	time(&time2);
+	totalTime = 0;
+
+	/*
+	//new parse()
+	buffloc = 0;
+	fopen_s(&yyin, fileName, "rb");
+	_fseeki64(yyin, 0, SEEK_END);
+	fileLen = _ftelli64(yyin);
+	_fseeki64(yyin, 0, SEEK_SET);
+	buffer = (char *) malloc(fileLen+1);
+	fread(buffer, fileLen, 1, yyin);
+	yyparse();	
+	fclose(yyin);
+	free(buffer);
+	*/
+
+	//old parse()
+    fopen_s(&yyin, fileName, "r");
     yyparse();
     fclose(yyin);
-    
-//    printf("... done!\n");
 }
 
 
 int yylex(void) {
 
     int c;
-    
+
     //remove spaces
     while ( (c = fgetc(yyin)) == ' ' || c =='\t' || c == '\n'){}
     //fprintf(stderr, "%c", c);
     
+	fgetpos( yyin, &pos );
+	if( (int) pos/(1024*1024) > gPos) {
+		gPos = (int) pos/(1024*1024);
+		time(&time1);
+		printf("%d MB parsed: \t (%d - %d)\n", pos/(1024*1024), (int)(time1 - time2), (int)(totalTime += (time1 - time2)));
+		time(&time2);
+	}
+	
+
     //lex digit
     if ( isdigit(c) ) {
         ungetc(c,yyin);
@@ -241,6 +277,39 @@ int yylex(void) {
     
     //otherwise, return char c
     return c;
+
+/*
+	if( buffloc/(1024*1024) > gPos) {
+		gPos = buffloc/(1024*1024);
+		time(&time1);
+		printf("%d MB parsed \t (%d - %d)\n", buffloc/(1024*1024), (int)(time1 - time2), (int)(totalTime += (time1 - time2)));
+		time(&time2);
+	}
+
+	while ( (c = buffer[buffloc]) == ' ' || c =='\t' || c == '\n') {
+	
+		//printf("%c", c);
+		buffloc++;
+	}
+
+	//printf("buffloc: %d \t char: %c\n", buffloc, c);
+
+	//lex digit
+    if ( isdigit(c) ) {
+
+		yylval = c - '0';
+
+		while ( isdigit(buffer[buffloc+1]) ) {
+
+			yylval = yylval*10 + (buffer[++buffloc] - '0');
+		}
+
+		buffloc++;
+        return(NUMBER);
+    }
+
+return buffer[buffloc++];
+*/
 }
 
 

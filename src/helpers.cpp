@@ -28,40 +28,40 @@ int writeBES2File(const char* filename, bes a) {
         besfile << "block ";
         if (a.blocks[i].sign) besfile << "nu ";
         else besfile << "mu ";
-        besfile << "B" << a.blocks[i].blockidentifier;
+        besfile << "B" << a.blocks[i].blockidentifier << " ";
         if (a.blocks[i].unique) besfile << "unique ";
-        besfile << "mode " << a.blocks[i].mode;
-        besfile << "\t (" << a.blocks[i].eqnCount << " equations)" << endl;
+        besfile << "mode " << a.blocks[i].mode << " is" << endl;
+        //besfile << "\t (" << a.blocks[i].eqnCount << " equations)" << endl;
         
         // print equations
         for(j = 0; j < a.blocks[i].eqnCount; j++) {
-            besfile << 'X' << a.blocks[i].eqns[j].lhsId << " = ";
+            besfile << "   X" << a.blocks[i].eqns[j].lhsId << " =";
             for(k = 0; k < a.blocks[i].eqns[j].varCount; k++)
             {
                 switch (a.blocks[i].eqns[j].rhs[k].type)
                 {
-                    case T: besfile << "true ";
+                    case T: besfile << " true";
                         break;
                         
-                    case F: besfile << "false ";
+                    case F: besfile << " false";
                         break;
                         
-                    case local: besfile << 'X' << a.blocks[i].eqns[j].rhs[k].localRef << ' ';
+                    case local: besfile << " X" << a.blocks[i].eqns[j].rhs[k].localRef;
                         break;
                         
-                    case global: besfile << 'X' << a.blocks[i].eqns[j].rhs[k].localRef << '_' << a.blocks[i].eqns[j].rhs[k].globalRef << ' ';
+                    case global: besfile << " X" << a.blocks[i].eqns[j].rhs[k].localRef << '_' << a.blocks[i].eqns[j].rhs[k].globalRef;
                         break;
                         
-                    case conjunct: besfile << "and ";
+                    case conjunct: besfile << " and";
                         break;
                         
-                    case disjunct: besfile << "or ";
+                    case disjunct: besfile << " or";
                         break;
                 }
             }
-            besfile << endl;
+            besfile << "\n";
         }
-        besfile << "end block" << endl;
+        besfile << "end block" << "\n" << "\n";
     }
 
 	besfile.close(); // end write data to file
@@ -205,15 +205,15 @@ int writeEval2File(const char* filename, double** data, int rows) {
 			break;
 
 		case 1:
-			plotfile << "\t\t\"" << datFile << "\" using " << i+1 << " ti \"Reverse: "		<< fixed << setprecision(0) << data[i][0] << "/" << data[i][1] << "\" ls " << 101 << " with lines";
+			plotfile << "\t\t\"" << datFile << "\" using " << i+1 << " ti \"Parallel: "		<< fixed << setprecision(0) << data[i][0] << "/" << data[i][1] << "\" ls " << 101 << " with lines";
 			break;
 
 		case 2:
-			plotfile << "\t\t\"" << datFile << "\" using " << i+1 << " ti \"Random: "		<< fixed << setprecision(0) << data[i][0] << "/" << data[i][1] << "\" ls " << 102 << " with lines";
+			plotfile << "\t\t\"" << datFile << "\" using " << i+1 << " ti \"Reverse: "		<< fixed << setprecision(0) << data[i][0] << "/" << data[i][1] << "\" ls " << 102 << " with lines";
 			break;
 
 		case 3:
-			plotfile << "\t\t\"" << datFile << "\" using " << i+1 << " ti \"Ordered(Asc): "		<< fixed << setprecision(0) << data[i][0] << "/" << data[i][1] << "\" ls " << 103 << " with lines";
+			plotfile << "\t\t\"" << datFile << "\" using " << i+1 << " ti \"Random: "		<< fixed << setprecision(0) << data[i][0] << "/" << data[i][1] << "\" ls " << 103 << " with lines";
 			break;
 
 		case 4:	

@@ -10,9 +10,9 @@
 #ifndef BES_H
 #define BES_H
 
+#include <cilk\cilk_api.h>
 #include <cilk/cilk.h>
 #include <cilk/common.h>
-
 
 typedef enum varType{
       T,
@@ -53,6 +53,7 @@ typedef struct bes{
     besblock* blocks;
 }bes;
 
+void parseBES(const char *fileName);
 
 int initBES();
 double computeDistance();
@@ -76,5 +77,6 @@ int parSolveBES();
 void solve();
 
 void evaluateBES(const char* filename, int runs);
+void evaluateRunTimes(char* filename, int iteration);
 
 #endif

@@ -1,11 +1,13 @@
 @echo off
-mkdir ..\eval\%1
-cp x64\Debug\PaRBES.exe ..\eval\%1	
-cd ..\eval\%1
-
-for %%f in (..\..\bes\*.bes) do (
+mkdir ..\eval\%1%2
+copy x64\Release\PaRBES.exe ..\eval\%1%2
+cd ..\eval\%1%2
 	
-	cp %%f .
+REM ping -n 30 127.0.0.1 > NUL
+
+for %%f in (..\..\bes\*%2.bes) do (
+	
+	copy %%f .
 	
 	for %%g in (*.bes) do (
 	
@@ -15,14 +17,15 @@ for %%f in (..\..\bes\*.bes) do (
 		
 		diff -q %%g.orig.seq.sol %%g.rev.seq.sol
 		diff -q %%g.orig.seq.sol %%g.rnd.seq.sol
+		diff -q %%g.orig.seq.sol %%g.orig.par.sol
 REM		diff -q %%g.orig.seq.sol %%g.asc.seq.sol
 REM		diff -q %%g.orig.seq.sol %%g.dsc.seq.sol
 	
-		rm %%g.rev.seq.sol
-		rm %%g.rnd.seq.sol
+		del %%g.rev.seq.sol
+		del %%g.rnd.seq.sol
 		
-		mv %%g.orig.seq.sol %%g.sol
+		move %%g.orig.seq.sol %%g.sol
 	)
 	
-	rm *.bes
+	del *.bes
 )
